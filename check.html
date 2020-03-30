@@ -1,0 +1,371 @@
+<html>
+
+<head>
+
+    <title></title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+   <script src="http://code.jquery.com/jquery.min.js"></script> 
+  
+    <script src="http://underscorejs.org/underscore.js"></script>
+  <script src="http://backbonejs.org/backbone.js"></script>
+   <style type="text/css">
+       
+input {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  margin-top: 6px;
+  margin-bottom: 16px;
+  resize: vertical;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+
+td,th {
+    padding: 10px;
+}
+
+
+   </style>
+
+</head>
+
+<body>
+<div class="container" style="margin-top: 30px">
+    <div class="row">
+        <div class="col-md-6">
+    <div id="mainedit">
+
+        Name <input type="text" id="name" />
+
+        Email <input type="text" id="email" />
+
+        Phone Number <input type="text" id="number" />
+
+        Address <input type="text" id="address" />
+
+        <input type="button" id="butChange" value="Add User" />
+
+    </div>
+</div>
+        <div class="col-md-2" style="margin-left: 80px">
+           
+                <table id="main" class="table">
+                     <thead>
+                 <tr>
+                <th>User Email</th>
+            </tr>
+             </thead>
+
+        <tbody></tbody>
+    </table>
+        </div>
+   
+
+    <script type="text/template" id="template-userItem">
+<tr>
+        <td id="name" scope="row"><%=username%></td>
+</tr>
+
+    </script>
+
+</div>
+
+<div id='edit'><br>
+     Name <input type="text" id="editname" />
+
+        Email <input type="text" id="editemail" />
+
+        Phone Number <input type="text" id="editnumber" />
+
+        Address <input type="text" id="editaddress" />
+
+<input type="button" id="butChange" value="Edit User" />
+     
+</div>
+</div>
+
+    <script type="text/javascript">
+
+        var User = function () {
+
+            this.events = _.extend({}, Backbone.Events);
+
+        };
+
+        var User = new User();
+
+        
+
+        var user = Backbone.Model.extend({});
+
+        var users = Backbone.Collection.extend({
+
+            model: user
+
+        });
+
+        var userListView = Backbone.View.extend({
+
+            type: "userListView", //for debugging
+
+            el: "#main",  //the view should be decoupled from the DOM, but for this example this will do.
+
+            //collection:  This will be passed at the time of initialization
+
+            initialize: function () {
+
+            },
+
+            render: function () {
+
+                _.each(this.collection.models, this.processUser, this);
+
+                return this;
+
+            },
+
+            processUser: function (user) {
+
+                var childuserItemView = new userView({ model: user });
+
+                childuserItemView.render();
+
+                this.$el.append(childuserItemView.el);
+
+            }
+
+        });
+
+        var userView = Backbone.View.extend({
+
+            type: "userView", //for debugging
+
+            template: _.template($("#template-userItem").html()),
+
+            tagName: "div",
+
+            className: "tableRow",
+
+            initialize: function () {
+
+                this.model.on("change", this.modelChanged, this);
+
+            },
+
+            events: {
+
+                "click": "viewClicked"
+
+            },
+
+            render: function () {
+
+                var outputHtml = this.template(this.model.toJSON());
+
+                this.$el.html(outputHtml);
+
+                return this;
+
+            },
+
+            modelChanged: function (model, changes) {
+
+                console.log("modelChanged:" + model.get("username"));
+
+                this.render();
+
+            },
+
+            viewClicked: function (event) {
+
+                console.log("viewClicked: " + this.model.get("username"));
+
+                User.events.trigger("user:selected", this.model);
+
+            }
+
+        });
+
+        var userDetailView = Backbone.View.extend({
+
+            el: "#mainedit",
+
+            initialize: function () {
+
+            
+
+            },
+
+            events: {
+
+                "click  #butChange": "viewChanged"
+
+            },
+
+            render: function () {
+
+                var name = this.model.get("username");
+
+                this.$el.find("#name").val(name);
+
+ 
+
+                var email = this.model.get("email");
+
+                this.$el.find("#email").val(email);
+
+
+                 var number = this.model.get("number");
+
+                this.$el.find("#number").val(number);
+
+ 
+
+                var address = this.model.get("address");
+
+                this.$el.find("#address").val(address);
+
+            },
+
+            userSelected: function (user) {
+
+                console.log(user);
+
+                this.model = user;
+
+                this.render();
+
+            },
+
+            viewChanged: function () {
+
+               var email =  this.$el.find("#email").val();
+               var name =  this.$el.find("#name").val();
+               var number =  this.$el.find("#number").val();
+               var address =  this.$el.find("#address").val();
+               var userdetail = {
+                "username":name,
+                "email":email,
+                "number":number,
+                "address":address
+               }
+                var users = JSON.parse(localStorage.getItem('userdetail')) || [];
+                users.push(userdetail);
+                 localStorage.setItem("userdetail",JSON.stringify(users));
+                 window.location.reload();
+                
+}
+
+        });
+
+       
+
+       var EditView = Backbone.View.extend({
+ 
+            
+            el: "#edit",
+
+            initialize: function () {
+                $("#edit").hide();
+                User.events.on("user:selected", this.userSelected, this);
+   
+            },
+
+           
+
+            events: {
+
+                "click  #butChange": "viewChanged"
+
+            },
+
+            render: function () {
+
+                var name = this.model.get("username");
+
+                this.$el.find("#editname").val(name);
+
+ 
+
+                var email = this.model.get("email");
+
+                this.$el.find("#editemail").val(email);
+
+
+                var number = this.model.get("number");
+
+                this.$el.find("#editnumber").val(number);
+
+ 
+
+                var address = this.model.get("address");
+
+                this.$el.find("#editaddress").val(address);
+
+            },
+
+            userSelected: function (user) {
+
+              $("#edit").show();
+
+
+                this.model = user;
+
+                this.render();
+
+            },
+
+            viewChanged: function () {
+
+                var name = this.$el.find("#editname").val();
+
+                this.model.set({ "username": name });
+
+ 
+
+                var email = this.$el.find("#editemail").val();
+
+                this.model.set({ "email": email });
+
+                var number = this.$el.find("#editnumber").val();
+
+                this.model.set({ "number": number });
+
+ 
+
+                var address = this.$el.find("#editaddress").val();
+
+                this.model.set({ "address": address });
+              
+
+            }
+});
+             var data = JSON.parse(localStorage.getItem("userdetail"));
+           
+          
+        var user = new users(data);
+        var userListView = new userListView({ collection: user });
+
+        userListView.render();
+        var userDetailView = new userDetailView();
+        var editView = new EditView();
+
+    </script>
+
+</body>
+
+</html>
